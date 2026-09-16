@@ -47,7 +47,7 @@ END;
 
 InvertFromGrade()
 BEGIN
-  LOCAL sta0, inv0, gpct, mode, dist, invAt, len, ivl, s, inv;
+  LOCAL sta0, inv0, gpct, mode, dist, invAt, runLen, ivl, s, inv;
 
   IF INPUT({sta0, inv0, gpct},
       "Invert From Grade",
@@ -74,23 +74,23 @@ BEGIN
     RETURN;
   END;
 
-  IF INPUT({len, ivl},
+  IF INPUT({runLen, ivl},
       "Table Over Length",
       {"Pipe length", "Station interval"},
       {"Total length from start station", "Interval spacing"},
       {100, 25})==0 THEN RETURN; END;
 
-  gL := len;
+  gL := runLen;
   PRINT();
   PRINT("INVERT TABLE");
   PRINT("Sta.       Invert");
   s := 0;
-  WHILE s<len DO
+  WHILE s<runLen DO
     inv := inv0-gG*s;
     PRINT((sta0+s)+"       "+ROUND(inv,3));
     s := s+ivl;
   END;
-  PRINT((sta0+len)+"       "+ROUND(inv0-gG*len,3));
+  PRINT((sta0+runLen)+"       "+ROUND(inv0-gG*runLen,3));
 END;
 
 CutFillToHub()
