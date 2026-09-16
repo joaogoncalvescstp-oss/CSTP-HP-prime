@@ -1,9 +1,8 @@
-// PipeGrade — HP Prime PPL program
+// PipeGrade - HP Prime PPL program
 // Pipe grade / invert / cut-fill calculator for construction staking.
-//
-// Grade sign convention: grade > 0 means invert elevation falls
-// (decreases) as station increases (normal gravity flow, upstream
-// to downstream). Enter a negative grade for a rising line.
+// Grade sign convention: grade > 0 means invert falls (decreases) as
+// station increases (normal gravity flow, upstream to downstream).
+// Enter a negative grade for a rising line.
 
 LOCAL gL, gG, gI0, gS0;
 
