@@ -1,0 +1,150 @@
+// PipeGrade — HP Prime PPL program
+// Pipe grade / invert / cut-fill calculator for construction staking.
+//
+// Grade sign convention: grade > 0 means invert elevation falls
+// (decreases) as station increases (normal gravity flow, upstream
+// to downstream). Enter a negative grade for a rising line.
+
+LOCAL gL, gG, gI0, gS0;
+
+GradeFromInverts()
+BEGIN
+  LOCAL L, I1, I2, ivl, s, inv;
+
+  IF INPUT({L, I1, I2},
+      "Grade From Inverts",
+      {"Pipe Length", "Invert In (start)", "Invert Out (end)"},
+      {"Length along pipe", "Upstream invert elev.", "Downstream invert elev."},
+      {0, 0, 0})==0 THEN RETURN; END;
+  IF L==0 THEN RETURN; END;
+
+  gL := L;
+  gG := (I1-I2)/L;
+  gI0 := I1;
+  gS0 := 0;
+
+  PRINT();
+  PRINT("GRADE FROM INVERTS");
+  PRINT("Length  : "+L);
+  PRINT("Inv In  : "+I1);
+  PRINT("Inv Out : "+I2);
+  PRINT("Grade   : "+ROUND(gG*100,3)+" %");
+
+  IF INPUT({ivl}, "Invert Table", {"Station interval (0=skip)"},
+      {"Enter 0 to skip the table"}, {0})==0 THEN RETURN; END;
+  IF ivl==0 THEN RETURN; END;
+
+  PRINT("");
+  PRINT("Sta.       Invert");
+  s := 0;
+  WHILE s<L DO
+    inv := I1-gG*s;
+    PRINT(s+"       "+ROUND(inv,3));
+    s := s+ivl;
+  END;
+  PRINT(L+"       "+ROUND(I2,3));
+END;
+
+InvertFromGrade()
+BEGIN
+  LOCAL sta0, inv0, gpct, mode, dist, invAt, len, ivl, s, inv;
+
+  IF INPUT({sta0, inv0, gpct},
+      "Invert From Grade",
+      {"Start station", "Start invert elev.", "Grade % (+falls/-rises)"},
+      {"Chainage at start of run", "Invert elev. at start station", "Design grade, percent"},
+      {0, 0, 0})==0 THEN RETURN; END;
+
+  gS0 := sta0;
+  gI0 := inv0;
+  gG := gpct/100;
+
+  CHOOSE(mode, "Output", "Single Station", "Table Over Length");
+  IF mode==0 THEN RETURN; END;
+
+  IF mode==1 THEN
+    IF INPUT({dist}, "Station To Solve", {"Station"},
+        {"Station along the run"}, {sta0})==0 THEN RETURN; END;
+    invAt := inv0-gG*(dist-sta0);
+    gL := dist-sta0;
+    PRINT();
+    PRINT("INVERT AT STATION");
+    PRINT("Station : "+dist);
+    PRINT("Invert  : "+ROUND(invAt,3));
+    RETURN;
+  END;
+
+  IF INPUT({len, ivl},
+      "Table Over Length",
+      {"Pipe length", "Station interval"},
+      {"Total length from start station", "Interval spacing"},
+      {100, 25})==0 THEN RETURN; END;
+
+  gL := len;
+  PRINT();
+  PRINT("INVERT TABLE");
+  PRINT("Sta.       Invert");
+  s := 0;
+  WHILE s<len DO
+    inv := inv0-gG*s;
+    PRINT((sta0+s)+"       "+ROUND(inv,3));
+    s := s+ivl;
+  END;
+  PRINT((sta0+len)+"       "+ROUND(inv0-gG*len,3));
+END;
+
+CutFillToHub()
+BEGIN
+  LOCAL src, sta, offset, hubElev, designElev, cf;
+
+  src := 2;
+  IF gL>0 THEN
+    CHOOSE(src, "Design Elevation Source",
+      "Use Stored Grade/Invert", "Enter Design Elev. Directly");
+    IF src==0 THEN RETURN; END;
+  END;
+
+  IF src==1 THEN
+    IF INPUT({sta, offset, hubElev},
+        "Cut/Fill To Hub",
+        {"Station", "Offset (+up/-down)", "Hub elevation"},
+        {"Station along stored run", "e.g. pipe O.D. to crown", "Measured hub/stake elevation"},
+        {gS0, 0, 0})==0 THEN RETURN; END;
+    designElev := gI0-gG*(sta-gS0)+offset;
+  ELSE
+    IF INPUT({designElev, hubElev},
+        "Cut/Fill To Hub",
+        {"Design elevation", "Hub elevation"},
+        {"Target grade elevation", "Measured hub/stake elevation"},
+        {0, 0})==0 THEN RETURN; END;
+  END;
+
+  cf := hubElev-designElev;
+
+  PRINT();
+  PRINT("CUT/FILL TO HUB");
+  PRINT("Design Elev : "+ROUND(designElev,3));
+  PRINT("Hub Elev    : "+ROUND(hubElev,3));
+  IF cf>=0 THEN
+    PRINT("==>  CUT  "+ROUND(cf,3));
+  ELSE
+    PRINT("==>  FILL "+ROUND(ABS(cf),3));
+  END;
+END;
+
+EXPORT PipeGrade()
+BEGIN
+  LOCAL c;
+  gL:=0; gG:=0; gI0:=0; gS0:=0;
+
+  REPEAT
+    CHOOSE(c, "PIPE GRADE / STAKING",
+      "1. Grade From Inverts",
+      "2. Invert From Grade",
+      "3. Cut/Fill To Hub",
+      "4. Exit");
+    IF c==1 THEN GradeFromInverts(); END;
+    IF c==2 THEN InvertFromGrade(); END;
+    IF c==3 THEN CutFillToHub(); END;
+  UNTIL c==4 OR c==0;
+END;
