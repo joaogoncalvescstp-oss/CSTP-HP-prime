@@ -8,7 +8,8 @@ LOCAL gL, gG, gI0, gS0;
 
 GradeFromInverts()
 BEGIN
-  LOCAL L, I1, I2, ivl, s, inv;
+  LOCAL L, I1, I2, ivl;
+  LOCAL s, elev;
 
   IF INPUT({L, I1, I2},
       "Grade From Inverts",
@@ -37,8 +38,8 @@ BEGIN
   PRINT("Sta.       Invert");
   s := 0;
   WHILE s<L DO
-    inv := I1-gG*s;
-    PRINT(s+"       "+ROUND(inv,3));
+    elev := I1-gG*s;
+    PRINT(s+"       "+ROUND(elev,3));
     s := s+ivl;
   END;
   PRINT(L+"       "+ROUND(I2,3));
@@ -46,30 +47,32 @@ END;
 
 InvertFromGrade()
 BEGIN
-  LOCAL sta0, inv0, gpct, mode, dist, invAt, runLen, ivl, s, inv;
+  LOCAL sta0, elev0, gpct, outMode;
+  LOCAL staDist, elevAt, runLen, ivl;
+  LOCAL s, elev;
 
-  IF INPUT({sta0, inv0, gpct},
+  IF INPUT({sta0, elev0, gpct},
       "Invert From Grade",
       {"Start station", "Start invert elev.", "Grade % (+falls/-rises)"},
       {"Chainage at start of run", "Invert elev. at start station", "Design grade, percent"},
       {0, 0, 0})==0 THEN RETURN; END;
 
   gS0 := sta0;
-  gI0 := inv0;
+  gI0 := elev0;
   gG := gpct/100;
 
-  CHOOSE(mode, "Output", "Single Station", "Table Over Length");
-  IF mode==0 THEN RETURN; END;
+  CHOOSE(outMode, "Output", "Single Station", "Table Over Length");
+  IF outMode==0 THEN RETURN; END;
 
-  IF mode==1 THEN
-    IF INPUT({dist}, "Station To Solve", {"Station"},
+  IF outMode==1 THEN
+    IF INPUT({staDist}, "Station To Solve", {"Station"},
         {"Station along the run"}, {sta0})==0 THEN RETURN; END;
-    invAt := inv0-gG*(dist-sta0);
-    gL := dist-sta0;
+    elevAt := elev0-gG*(staDist-sta0);
+    gL := staDist-sta0;
     PRINT();
     PRINT("INVERT AT STATION");
-    PRINT("Station : "+dist);
-    PRINT("Invert  : "+ROUND(invAt,3));
+    PRINT("Station : "+staDist);
+    PRINT("Invert  : "+ROUND(elevAt,3));
     RETURN;
   END;
 
@@ -85,16 +88,17 @@ BEGIN
   PRINT("Sta.       Invert");
   s := 0;
   WHILE s<runLen DO
-    inv := inv0-gG*s;
-    PRINT((sta0+s)+"       "+ROUND(inv,3));
+    elev := elev0-gG*s;
+    PRINT((sta0+s)+"       "+ROUND(elev,3));
     s := s+ivl;
   END;
-  PRINT((sta0+runLen)+"       "+ROUND(inv0-gG*runLen,3));
+  PRINT((sta0+runLen)+"       "+ROUND(elev0-gG*runLen,3));
 END;
 
 CutFillToHub()
 BEGIN
-  LOCAL src, sta, offset, hubElev, designElev, cf;
+  LOCAL src, sta, offset;
+  LOCAL hubElev, designElev, cf;
 
   src := 2;
   IF gL>0 THEN
